@@ -11,10 +11,11 @@
   },
   "main": "src/index.js",
   "scripts": {
+    "dev": "_mocha --recursive test/ --watch",
     "lint": "eslint --fix src/ test/",
     "test": "istanbul cover _mocha --recursive test/",
     "build": "eslint src/ test/ && npm run test",
-    "coverage": "http-serve coverage/lcov-report/"
+    "coverage": "http-server coverage/lcov-report/"
   },
   "dependencies": {},
   "devDependencies": {

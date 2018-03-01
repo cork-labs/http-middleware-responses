@@ -20,27 +20,84 @@ app.get('/path/:id', (req, res, next) => {
     return res.notFound(`Thing with ID: ${req.params.id} could not be found.`);
   }
   res.meta('next', '/path/foobar');
-  res.data(data);
+  res.ok(data);
 });
 ```
 
-### Response Data
 
-The default behaviour of `data()` is to send json data in a RESTful way.
 
-The extra `noContent()` and `created()` methods are also available.
 
-### Response Meta
+## API
 
-The `meta()` method adds metadata to the request. This will be sent in the form of custom, namespaced, headers.
-With the default configuration, the above code would set the header  `x-cork-labs-next: /path/foobar`.
+### res.meta(key, value) / res.meta({ key: value, ... })
 
-### Response Errors
+Sets one ore more headers at once.
 
-The default error methods are configured in [errorMap](./src/errorMap.js).
+The `meta()` method adds metadata to the response. Metadata is sent as custom, namespaced, headers.
 
-All error methods, such as `notFound()`, take an optional details argument. With the default configuration,
-this would produce something like:
+```javascript
+res.meta('next', '/path/foobar');
+```
+
+With the default configuration, the code above will set the header  `x-cork-labs-next: /path/foobar`.
+
+You can customise the custom headers namespace when setting up the middleware.
+
+### res.\<data\>(data)
+
+Invoke a method that sends data.
+
+- `ok(data)`
+- `created(data)`
+- `accepeted(data)`
+- `noAuthoritativeInformation(data)`
+
+These methods simply send the provied data.
+
+```javascript
+res.ok({foo: 'bar'});
+```
+
+With the default configuration, the above code results in the following response.
+
+```json
+// status 200
+{
+  "foo": "bar"
+}
+```
+
+The behaviour can be overriden and new methods can be added when setting up the middleware.
+
+### res.\<no-content\>()
+
+Invoke a method that does not send data.
+
+- `noContent()`
+- `resetContent()`
+
+These methods send an empty message with the appropriate status code.
+
+```javascript
+res.noContent();
+```
+
+With the default configuration, the above code results in the following response.
+
+```json
+// status 404
+{
+  "error": "NotFound"
+}
+```
+
+The behaviour can be overriden and new methods can be added when setting up the middleware.
+
+### res.\<error\>([details])
+
+Invoke a method that sends a `4xx` or `5xx` error, optionally providing error details.
+
+With the default configuration, the code above will result in the following response being sent.
 
 ```json
 // status 404
@@ -50,76 +107,103 @@ this would produce something like:
 }
 ```
 
+The list of default methods, their status codes, and error strings is available in [src/methods.js](./src/methods.js).
 
-## Config
+You can override all error codes and text and extend the error list with your own map when setting up the middleware.
+
+
+## Configuration
 
 The middleware can be configured via an options object when calling its factory function.
 
 ```javascript
 const options = { ns: 'x-yourapp' };
-httpResponses(options);
+app.use(httpResponses(options));
 ```
 
 ### ns (default: 'x-cork-labs')
 
 Changes the custom headers prefix.
 
+```javascript
+const options = {
+  methods: {
+    ns: 'x-your-app'
+  }
+}
+app.use(httpResponses(options));
+```
+
 ### keys (default: { error: 'error', details: 'details' })
 
 Customises the keys used in error responses.
 
-### errors (default: null)
-
-Extend or override the available error methods by providing an object where:
-- the key is the name of the method to expose in the `res` object.
-- the value is an object with the status code and the error text to send in the payload.
 
 ```javascript
-const config = {
-  errors: {
-    fooError: {
+const options = {
+  keys: {
+    error: 'code',
+    details: 'info'
+  }
+}
+app.use(httpResponses(options));
+```
+
+### methods (default: null)
+
+The built-in error methods are provided by [src/methods.js](./src/methods.js).
+
+Extend or override the available methods by providing an object under `methods` where:
+  - `key` is the name of the method to expose in the `res` object.
+  - `value` is either a method definition or a method factory.
+
+```javascript
+const options = {
+  methods: {
+    key: <value>
+  }
+}
+app.use(httpResponses(options));
+```
+
+#### Method definitions
+
+Provide an object with:
+  - `type` of response, one of `data`, `no-content`, `client-error` and `server-error`
+  - `status` code
+  - `text` to send (only used in `client-error` and `sever-error` methods)
+
+```javascript
+const options = {
+  methods: {
+    foo: {
+      type: 'client-error',
       status: 499,
       text: 'Foo'
     }
   }
 }
-httpResponses(config);
+app.use(httpResponses(options));
 
 // your route
-res.fooError('more foo'); // { "error": "Foo", "details": "more foo" }
+res.fooError('more foo'); // 499 { "error": "Foo", "details": "more foo" }
 ```
-### methods (default: null)
 
-Extend or override the response methods by providing an object where:
-- the key is the name of the method to expose in the `res` object.
-- the value is a function that accepts `req, res` and must return the actual function to expose.
+#### Method factories
+
+Provide a function that accepts `(req, res)` and returns the actual function to expose.
 
 ```javascript
-const config = {
+const options = {
   methods: {
-    fooData: (req, res) => (foo, bar) => res.status(299).data({ foo, bar })
+    fooData: (req, res) => (foo, bar) => res.status(999).json({ foo, bar })
   }
 };
-httpResponses(config);
+app.use(httpResponses(options));
 
 // your route
-res.fooData('foo', 'bar');
+res.fooData('foo', 'bar'); // 999 { "foo": "foo", "bar": "bar" }
 ```
-
-
-## API
-
-### res.meta(key, value)
-
-### res.meta(object)
-
-### res.data(data)
-
-### res.noContent()
-
-### res.<error>([details])
-
-The list of default error methods, their status codes, and error strings is available in [errorMap](./src/errorMap.js).
 
 
 ## Develop

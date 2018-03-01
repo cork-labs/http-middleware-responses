@@ -1,11 +1,10 @@
 'use strict';
 
-const errorMap = require('./errorMap');
+const availableMethods = require('./methods');
 
 const defaults = {
   ns: 'x-cork-labs',
   keys: {},
-  errors: {},
   methods: {}
 };
 
@@ -17,58 +16,75 @@ const defaultKeys = {
 const response = function (config) {
   config = Object.assign({}, defaults, config);
   config.keys = Object.assign({}, defaultKeys, config.keys);
-
-  const errors = Object.assign(errorMap, config.errors);
+  const methods = Object.assign({}, config.methods);
+  for (let key in availableMethods) {
+    methods[key] = Object.assign({}, availableMethods[key]);
+  }
+  Object.assign(methods, config.methods);
 
   // -- private
 
   const meta = (res, metaOrKey, value) => {
-    const _meta = {};
+    const meta = {};
     if (typeof metaOrKey === 'string') {
-      _meta[metaOrKey] = value;
+      meta[metaOrKey] = value;
     } else {
-      Object.assign(_meta, metaOrKey);
+      Object.assign(meta, metaOrKey);
     }
 
-    for (let key in _meta) {
+    for (let key in meta) {
       const header = config.ns + '-' + key;
-      res.header(header, res._meta[key]);
+      res.header(header, meta[key]);
     }
   };
 
-  const methods = {
-    data: (req, res) => (data) => {
-      res.status(200);
+  const dataMethod = (name, options) => {
+    return (req, res) => (data) => {
+      res.status(options.status);
       res.json(data);
-    },
-    noContent: (req, res) => () => {
-      res.status(204);
-      res.json();
-    },
-    created: (req, res) => () => {
-      res.status(204);
-      res.json();
-    }
+    };
   };
 
-  for (let error in errors) {
-    methods[error] = (req, res) => {
-      return (details) => {
-        const payload = {};
-        payload[config.keys.error] = errors[error].text;
-        if (details) {
-          payload[config.keys.details] = details;
-        }
-        res.status(errors[error].status);
-        res.json(payload);
-      };
+  const noContentMethod = (name, options) => {
+    return (req, res) => () => {
+      res.status(options.status);
+      res.json();
     };
+  };
 
-    Object.assign(methods, config.methods);
+  const errorMethod = (name, options) => {
+    return (req, res) => (details) => {
+      const payload = {};
+      payload[config.keys.error] = options.text;
+      if (details) {
+        payload[config.keys.details] = details;
+      }
+      res.status(options.status);
+      res.json(payload);
+    };
+  };
+
+  for (let name in methods) {
+    if (typeof methods[name] !== 'function') {
+      switch (methods[name].type) {
+        case 'data':
+          methods[name] = dataMethod(name, methods[name]);
+          break;
+        case 'no-content':
+          methods[name] = noContentMethod(name, methods[name]);
+          break;
+        case 'client-error':
+        case 'server-error':
+          methods[name] = errorMethod(name, methods[name]);
+          break;
+        default:
+          throw new Error(`Invalid method definition for method "${name}".`);
+      }
+    }
   }
 
-  const makeMethod = function (key, req, res) {
-    const method = methods[key](req, res);
+  const makeMethod = function (name, req, res) {
+    const method = methods[name](req, res);
     return function () {
       method.apply(null, arguments);
     };
@@ -81,8 +97,8 @@ const response = function (config) {
     res.meta = (metaOrKey, value) => {
       meta(res, metaOrKey, value);
     }; ;
-    for (let key in methods) {
-      res[key] = makeMethod(key, req, res);
+    for (let name in methods) {
+      res[name] = makeMethod(name, req, res);
     }
     next();
   };
