@@ -1,4 +1,4 @@
-# HTTP Middleware Cookies
+# HTTP Middleware Responses
 
 > Express middleware, exposes configurable response methods in `res`.
 
@@ -11,7 +11,7 @@ npm install --save @cork-labs/http-middleware-responses
 
 ```javascript
 // your application setup
-const httpResponses = require('@cork-labs/http-middleware-cookies');
+const httpResponses = require('@cork-labs/http-middleware-responses');
 app.use(httpResponses());
 
 // your route
@@ -72,7 +72,7 @@ Customises the keys used in error responses.
 
 Extend or override the available error methods by providing an object where:
 - the key is the name of the method to expose in the `res` object.
-- the value is an object with the status code and the error text to
+- the value is an object with the status code and the error text to send in the payload.
 
 ```javascript
 const config = {
