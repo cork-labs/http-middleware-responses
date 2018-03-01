@@ -13,7 +13,7 @@ describe('httpResponses()', function () {
     expect(httpResponses).to.be.a('function');
   });
 
-  describe('when invoke', function () {
+  describe('when invoked', function () {
     beforeEach(function () {
       this.middleware = httpResponses();
     });
