@@ -1,0 +1,34 @@
+{
+  "name": "@cork-labs/http-middleware-responses",
+  "version": "0.0.1",
+  "description": "",
+  "license": "MIT",
+  "homepage": "https://github.com/cork-labs/http-middleware-responses",
+  "author": "Andre Torgal <andre.torgal@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cork-labs/http-middleware-responses.git"
+  },
+  "main": "src/index.js",
+  "scripts": {
+    "lint": "eslint --fix src/ test/",
+    "test": "istanbul cover _mocha --recursive test/",
+    "build": "eslint src/ test/ && npm run test",
+    "coverage": "http-serve coverage/lcov-report/"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "eslint": "^4.18.1",
+    "eslint-config-standard": "^11.0.0",
+    "eslint-plugin-import": "^2.9.0",
+    "eslint-plugin-node": "^6.0.1",
+    "eslint-plugin-promise": "^3.6.0",
+    "eslint-plugin-standard": "^3.0.1",
+    "http-server": "^0.11.1",
+    "istanbul": "^0.4.5",
+    "mocha": "^5.0.1",
+    "sinon": "^4.4.2",
+    "sinon-chai": "^2.14.0"
+  }
+}
