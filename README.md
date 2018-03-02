@@ -17,10 +17,10 @@ app.use(httpResponses());
 // your route
 app.get('/path/:id', (req, res, next) => {
   if ( ... ) {
-    return res.notFound(`Thing with ID: ${req.params.id} could not be found.`);
+    return res.response.notFound(`Thing with ID: ${req.params.id} could not be found.`);
   }
   res.meta('next', '/path/foobar');
-  res.ok(data);
+  res.response.ok(data);
 });
 ```
 
@@ -43,7 +43,7 @@ With the default configuration, the code above will set the header  `x-cork-labs
 
 You can customise the custom headers namespace when setting up the middleware.
 
-### res.\<data\>(data)
+### res.response.\<data\>(data)
 
 Invoke a method that sends data.
 
@@ -55,7 +55,7 @@ Invoke a method that sends data.
 These methods simply send the provied data.
 
 ```javascript
-res.ok({foo: 'bar'});
+res.response.ok({foo: 'bar'});
 ```
 
 With the default configuration, the above code results in the following response.
@@ -69,7 +69,7 @@ With the default configuration, the above code results in the following response
 
 The behaviour can be overriden and new methods can be added when setting up the middleware.
 
-### res.\<no-content\>()
+### res.response.\<no-content\>()
 
 Invoke a method that does not send data.
 
@@ -79,7 +79,7 @@ Invoke a method that does not send data.
 These methods send an empty message with the appropriate status code.
 
 ```javascript
-res.noContent();
+res.response.noContent();
 ```
 
 With the default configuration, the above code results in the following response.
@@ -93,7 +93,7 @@ With the default configuration, the above code results in the following response
 
 The behaviour can be overriden and new methods can be added when setting up the middleware.
 
-### res.\<error\>([details])
+### res.response.\<error\>([details])
 
 Invoke a method that sends a `4xx` or `5xx` error, optionally providing error details.
 
@@ -155,7 +155,7 @@ The built-in error methods are provided by [src/methods.js](./src/methods.js).
 
 Extend or override the available methods by providing an object under `methods` where:
   - `key` is the name of the method to expose in the `res` object.
-  - `value` is either a method definition or a method factory.
+  - `value` is either a method definition or a function.
 
 ```javascript
 const options = {
@@ -186,23 +186,27 @@ const options = {
 app.use(httpResponses(options));
 
 // your route
-res.fooError('more foo'); // 499 { "error": "Foo", "details": "more foo" }
+res.response.fooError('more foo'); // 499 { "error": "Foo", "details": "more foo" }
 ```
 
-#### Method factories
+#### Method functions
 
-Provide a function that accepts `(req, res)` and returns the actual function to expose.
+Provide a function.
+
+Function will be invoked in the context of a `Response` instance and the following properties are availble:
+- `this._req` - express request object
+- `this._res` - express response object
 
 ```javascript
 const options = {
   methods: {
-    fooData: (req, res) => (foo, bar) => res.status(999).json({ foo, bar })
+    fooData: (foo, bar) => this._res.status(999).json({ foo, bar })
   }
 };
 app.use(httpResponses(options));
 
 // your route
-res.fooData('foo', 'bar'); // 999 { "foo": "foo", "bar": "bar" }
+res.response.fooData('foo', 'bar'); // 999 { "foo": "foo", "bar": "bar" }
 ```
 
 

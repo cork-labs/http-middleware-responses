@@ -53,16 +53,21 @@ describe('httpResponses()', function () {
         expect(this.res.meta.length).to.equal(2);
       });
 
-      it('should expose the "ok" function in res', function () {
-        expect(this.res.ok).to.be.a('function');
+      it('should expose the "response" object in res', function () {
+        expect(this.res.response).to.be.an('object');
+        expect(this.res.response.constructor.name).to.equal('Response');
       });
 
-      it('should expose the "noContent" function in res', function () {
-        expect(this.res.noContent).to.be.a('function');
+      it('should expose the "ok" function in res.response', function () {
+        expect(this.res.response.ok).to.be.a('function');
       });
 
-      it('should expose the "badRequest" function in res', function () {
-        expect(this.res.badRequest).to.be.a('function');
+      it('should expose the "noContent" function in res.response', function () {
+        expect(this.res.response.noContent).to.be.a('function');
+      });
+
+      it('should expose the "badRequest" function in res.response', function () {
+        expect(this.res.response.badRequest).to.be.a('function');
       });
 
       describe('when meta() is invoked with two strings', function () {
@@ -88,7 +93,7 @@ describe('httpResponses()', function () {
       describe('when ok() is invoked', function () {
         beforeEach(function () {
           this.data = {};
-          this.res.ok(this.data);
+          this.res.response.ok(this.data);
         });
 
         it('should invoke "res.status()"', function () {
@@ -102,7 +107,7 @@ describe('httpResponses()', function () {
 
       describe('when noContent() is invoked', function () {
         beforeEach(function () {
-          this.res.noContent();
+          this.res.response.noContent();
         });
 
         it('should invoke "res.status()"', function () {
@@ -117,7 +122,7 @@ describe('httpResponses()', function () {
       describe('when internalServerError() is invoked', function () {
         beforeEach(function () {
           this.details = { foo: 'bar' };
-          this.res.internalServerError(this.details);
+          this.res.response.internalServerError(this.details);
         });
 
         it('should invoke "res.status()"', function () {
@@ -163,7 +168,7 @@ describe('httpResponses()', function () {
       describe('and internalServerError() is invoked', function () {
         beforeEach(function () {
           this.details = { foo: 'bar' };
-          this.res.internalServerError(this.details);
+          this.res.response.internalServerError(this.details);
         });
 
         it('should invoke "res.json()" with the modified key', function () {
@@ -195,7 +200,7 @@ describe('httpResponses()', function () {
       describe('and that error method is invoked', function () {
         beforeEach(function () {
           this.data = { foo: 'bar' };
-          this.res.ok(this.data);
+          this.res.response.ok(this.data);
         });
 
         it('should invoke "res.status()"', function () {
@@ -225,7 +230,7 @@ describe('httpResponses()', function () {
       describe('and that error method is invoked', function () {
         beforeEach(function () {
           this.data = { foo: 'bar' };
-          this.res.noContent(this.data);
+          this.res.response.noContent(this.data);
         });
 
         it('should invoke "res.status()"', function () {
@@ -255,7 +260,7 @@ describe('httpResponses()', function () {
 
       describe('and that error method is invoked', function () {
         beforeEach(function () {
-          this.res.internalServerError();
+          this.res.response.internalServerError();
         });
 
         it('should invoke "res.status()"', function () {
@@ -273,28 +278,22 @@ describe('httpResponses()', function () {
 
     describe('when "config.methods" supplies a method factory', function () {
       beforeEach(function () {
-        this.methodFactory = sinon.stub();
         this.method = sinon.spy();
-        this.methodFactory.returns(this.method);
         this.config = {
           methods: {
-            internalServerError: this.methodFactory
+            internalServerError: this.method
           }
         };
         this.middleware = httpResponses(this.config);
         this.middleware(this.req, this.res, this.nextSpy);
       });
 
-      it('should invoke the custom method factory', function () {
-        expect(this.methodFactory).to.have.been.calledWithExactly(this.req, this.res);
-      });
-
       describe('and the exposed method is invoked', function () {
         beforeEach(function () {
-          this.res.internalServerError('foo', 'bar');
+          this.res.response.internalServerError('foo', 'bar');
         });
 
-        it('should invoke the method returned by thg factory', function () {
+        it('should invoke the method returned by the factory', function () {
           expect(this.method).to.have.been.calledWithExactly('foo', 'bar');
         });
       });
