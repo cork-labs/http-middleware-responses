@@ -6,12 +6,17 @@ function createResponse (config, methods) {
       this._req = req;
       this._res = res;
     }
+
+    severity (severity) {
+      this._res.severity = severity;
+    }
   }
 
   // -- private
 
   const dataMethod = (name, options) => {
     return function (data) {
+      this._res.severity = this._res.severity || options.severity;
       this._res.status(options.status);
       this._res.json(data);
     };
@@ -19,6 +24,7 @@ function createResponse (config, methods) {
 
   const noContentMethod = (name, options) => {
     return function () {
+      this._res.severity = this._res.severity || options.severity;
       this._res.status(options.status);
       this._res.json();
     };
@@ -31,6 +37,7 @@ function createResponse (config, methods) {
       if (details) {
         payload[config.keys.details] = details;
       }
+      this._res.severity = this._res.severity || options.severity;
       this._res.status(options.status);
       this._res.json(payload);
     };

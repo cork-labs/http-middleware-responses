@@ -96,6 +96,10 @@ describe('httpResponses()', function () {
           this.res.response.ok(this.data);
         });
 
+        it('should set "res.severity"', function () {
+          expect(this.res.severity).to.equal('info');
+        });
+
         it('should invoke "res.status()"', function () {
           expect(this.res.status).to.have.been.calledWithExactly(200);
         });
@@ -110,6 +114,10 @@ describe('httpResponses()', function () {
           this.res.response.noContent();
         });
 
+        it('should set "res.severity"', function () {
+          expect(this.res.severity).to.equal('info');
+        });
+
         it('should invoke "res.status()"', function () {
           expect(this.res.status).to.have.been.calledWithExactly(204);
         });
@@ -119,10 +127,39 @@ describe('httpResponses()', function () {
         });
       });
 
+      describe('when notFound() is invoked', function () {
+        beforeEach(function () {
+          this.details = { foo: 'bar' };
+          this.res.response.notFound(this.details);
+        });
+
+        it('should set "res.severity"', function () {
+          expect(this.res.severity).to.equal('warn');
+        });
+
+        it('should invoke "res.status()"', function () {
+          expect(this.res.status).to.have.been.calledWithExactly(404);
+        });
+
+        it('should invoke "res.json()"', function () {
+          const expectedPayload = {
+            error: 'NotFound',
+            details: {
+              foo: 'bar'
+            }
+          };
+          expect(this.res.json).to.have.been.calledWithExactly(expectedPayload);
+        });
+      });
+
       describe('when internalServerError() is invoked', function () {
         beforeEach(function () {
           this.details = { foo: 'bar' };
           this.res.response.internalServerError(this.details);
+        });
+
+        it('should set "res.severity"', function () {
+          expect(this.res.severity).to.equal('error');
         });
 
         it('should invoke "res.status()"', function () {
@@ -137,6 +174,18 @@ describe('httpResponses()', function () {
             }
           };
           expect(this.res.json).to.have.been.calledWithExactly(expectedPayload);
+        });
+      });
+
+      describe('when severity() is invoked before response', function () {
+        beforeEach(function () {
+          this.details = { foo: 'bar' };
+          this.res.response.severity('warn');
+          this.res.response.internalServerError(this.details);
+        });
+
+        it('should preserve the previous severity', function () {
+          expect(this.res.severity).to.equal('warn');
         });
       });
     });
