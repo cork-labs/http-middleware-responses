@@ -11,6 +11,7 @@ const defaults = {
 
 const defaultKeys = {
   error: 'error',
+  code: 'code',
   details: 'details'
 };
 

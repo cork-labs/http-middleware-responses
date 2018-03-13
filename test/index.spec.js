@@ -129,8 +129,9 @@ describe('httpResponses()', function () {
 
       describe('when notFound() is invoked', function () {
         beforeEach(function () {
+          this.code = 'foobar';
           this.details = { foo: 'bar' };
-          this.res.response.notFound(this.details);
+          this.res.response.notFound(this.code, this.details);
         });
 
         it('should set "res.severity"', function () {
@@ -144,6 +145,7 @@ describe('httpResponses()', function () {
         it('should invoke "res.json()"', function () {
           const expectedPayload = {
             error: 'NotFound',
+            code: 'foobar',
             details: {
               foo: 'bar'
             }
@@ -154,12 +156,17 @@ describe('httpResponses()', function () {
 
       describe('when internalServerError() is invoked', function () {
         beforeEach(function () {
+          this.code = 'foobar';
           this.details = { foo: 'bar' };
-          this.res.response.internalServerError(this.details);
+          this.res.response.internalServerError(this.code, this.details);
         });
 
         it('should set "res.severity"', function () {
           expect(this.res.severity).to.equal('error');
+        });
+
+        it('should set "res.errorCode"', function () {
+          expect(this.res.errorCode).to.equal('foobar');
         });
 
         it('should invoke "res.status()"', function () {
@@ -169,6 +176,7 @@ describe('httpResponses()', function () {
         it('should invoke "res.json()"', function () {
           const expectedPayload = {
             error: 'InternalServerError',
+            code: 'foobar',
             details: {
               foo: 'bar'
             }
@@ -179,13 +187,27 @@ describe('httpResponses()', function () {
 
       describe('when severity() is invoked before response', function () {
         beforeEach(function () {
+          this.code = 'foobar';
           this.details = { foo: 'bar' };
           this.res.response.severity('warn');
-          this.res.response.internalServerError(this.details);
+          this.res.response.internalServerError(this.code, this.details);
         });
 
         it('should preserve the previous severity', function () {
           expect(this.res.severity).to.equal('warn');
+        });
+      });
+
+      describe('when code() is invoked before response', function () {
+        beforeEach(function () {
+          this.code = 'foobar';
+          this.details = { foo: 'bar' };
+          this.res.response.code('baz');
+          this.res.response.internalServerError(this.code, this.details);
+        });
+
+        it('should preserve the previous code', function () {
+          expect(this.res.errorCode).to.equal('baz');
         });
       });
     });
@@ -207,6 +229,7 @@ describe('httpResponses()', function () {
         this.config = {
           keys: {
             error: 'e',
+            code: 'c',
             details: 'd'
           }
         };
@@ -216,13 +239,15 @@ describe('httpResponses()', function () {
 
       describe('and internalServerError() is invoked', function () {
         beforeEach(function () {
+          this.code = 'foobar';
           this.details = { foo: 'bar' };
-          this.res.response.internalServerError(this.details);
+          this.res.response.internalServerError(this.code, this.details);
         });
 
         it('should invoke "res.json()" with the modified key', function () {
           const expectedPayload = {
             e: 'InternalServerError',
+            c: 'foobar',
             d: {
               foo: 'bar'
             }
@@ -358,7 +383,7 @@ describe('httpResponses()', function () {
       });
 
       it('should throw an error', function () {
-        var fn = () => {
+        const fn = () => {
           this.middleware = httpResponses(this.config);
         };
         expect(fn).to.throw('Invalid method definition');

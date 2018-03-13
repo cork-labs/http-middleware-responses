@@ -10,6 +10,10 @@ function createResponse (config, methods) {
     severity (severity) {
       this._res.severity = severity;
     }
+
+    code (code) {
+      this._res.errorCode = code;
+    }
   }
 
   // -- private
@@ -31,13 +35,17 @@ function createResponse (config, methods) {
   };
 
   const errorMethod = (name, options) => {
-    return function (details) {
+    return function (code, details) {
       const payload = {};
       payload[config.keys.error] = options.text;
+      if (code) {
+        payload[config.keys.code] = code;
+      }
       if (details) {
         payload[config.keys.details] = details;
       }
       this._res.severity = this._res.severity || options.severity;
+      this._res.errorCode = this._res.errorCode || code;
       this._res.status(options.status);
       this._res.json(payload);
     };
