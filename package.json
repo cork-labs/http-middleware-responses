@@ -1,6 +1,6 @@
 {
   "name": "@cork-labs/http-middleware-responses",
-  "version": "0.4.1-pre",
+  "version": "0.5.0",
   "description": "Express middleware, exposes configurable response methods in res",
   "license": "MIT",
   "homepage": "https://github.com/cork-labs/http-middleware-responses",
